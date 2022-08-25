@@ -13,6 +13,7 @@ namespace Empleado_apirest.Entidades
    
         public int? codigo { get; set; } 
         public int? local { get; set; }
+        public Boolean? activo { get; set; }
         //public virtual string? descripcion { get; set; } 
     }
 }

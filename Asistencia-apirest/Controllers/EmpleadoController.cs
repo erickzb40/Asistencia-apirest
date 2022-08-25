@@ -35,6 +35,7 @@ namespace DemoAPI.Controllers
                           a.codigo,
                           a.tipo_doc,
                           a.nombre,
+                          a.activo,
                           sa.empresa,
                           sa.descripcion,
                           sa.ruc
