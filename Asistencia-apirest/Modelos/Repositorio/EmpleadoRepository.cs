@@ -47,7 +47,11 @@ namespace DemoAPI.Models.Repository
 
         public IEnumerable<Empleado> GetEmpleados()
         {
-            return _context.Empleado.ToList();
+            return _context.Empleado.FromSqlRaw(@"select empleado.id,nombre,num_doc,tipo_doc,local,local.descripcion,codigo 
+            from EMPLEADO 
+            inner join local on (empleado.local=local.id)
+            where activo=1
+            ").ToList();
         }
 
         public async Task GuardarArchivo(IFormFile archivo, string carpeta)

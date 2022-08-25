@@ -8,7 +8,8 @@ namespace DemoAPI.Models.Repository
         Task<Asistencia> CreateAsistenciaAsync(Asistencia Asistencia);
         Task<bool> DeleteAsistenciaAsync(Asistencia Asistencia);
         Asistencia GetAsistenciaById(int id);
-        IEnumerable<Asistencia> GetAsistencias();
+        //IEnumerable<Asistencia> GetAsistencias();
         Task<bool> UpdateAsistenciaAsync(Asistencia Asistencia);
+
     }
 }

@@ -10,7 +10,6 @@ namespace Asistencia_apirest.Entidades
         public string? contrasena { get; set; } 
         public string? nombres { get; set; }
         public string? correoelectronico { get; set; }
-        public int? grupoid { get; set; }
 
     }
 }

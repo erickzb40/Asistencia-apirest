@@ -1,26 +1,44 @@
 ﻿
+using DemoAPI.Models;
 using Empleado_apirest.Entidades;
 using Empleado_apirest.Modelos.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections;
 
 namespace DemoAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class EmpleadoController : ControllerBase
-    {
+    { private SampleContext _context;
         private IEmpleadoRepository _EmpleadoRepository;
 
-        public EmpleadoController(IEmpleadoRepository EmpleadoRepository)
+        public EmpleadoController(IEmpleadoRepository EmpleadoRepository,SampleContext context)
         {
             _EmpleadoRepository = EmpleadoRepository;
+            _context = context;
         }
 
         [HttpGet]
         [ActionName(nameof(GetEmpleadosAsync))]
-        public IEnumerable<Empleado> GetEmpleadosAsync()
+        public IEnumerable GetEmpleadosAsync()
         {
-            return _EmpleadoRepository.GetEmpleados();
+            var query = (from a in _context.Empleado
+                         join sa in _context.Local on a.local equals sa.id
+                         select new
+                         {
+                          a.id,
+                          a.num_doc,
+                          a.local,
+                          a.codigo,
+                          a.tipo_doc,
+                          a.nombre,
+                          sa.empresa,
+                          sa.descripcion,
+                          sa.ruc
+                         }
+                       ).ToList();
+            return query;
         }
 
         [HttpGet("{id}")]
@@ -34,9 +52,15 @@ namespace DemoAPI.Controllers
             }
             return EmpleadoByID;
         }
-        [HttpGet("codigo")]
+        [HttpGet("codigoUpdate")]
         [ActionName(nameof(GetEmpleadoByCodigo))]
-        public IEnumerable<Empleado> GetEmpleadoByCodigo(int codigo)
+        public IEnumerable<Empleado> GetEmpleadoByCodigo(int codigo,int id)
+        {
+            return _EmpleadoRepository.GetEmpleadoByCodigo(codigo).Where(r=>r.id!=id);
+        }
+        [HttpGet("codigoInsert")]
+        [ActionName(nameof(GetEmpleadoByCodigoInsert))]
+        public IEnumerable<Empleado> GetEmpleadoByCodigoInsert(int codigo)
         {
             return _EmpleadoRepository.GetEmpleadoByCodigo(codigo);
         }

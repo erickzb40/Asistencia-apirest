@@ -12,20 +12,23 @@ namespace DemoAPI.Models.Repository
         private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _env;
         public AsistenciaRepository(SampleContext context) => _context = context;
 
-        public IEnumerable<Asistencia> GetAsistencias()
-        {
-            return _context.Asistencia.ToList();
-        }
+        //public IEnumerable<Asistencia_empleado> GetAsistenciasEmpleado()
+        //{
+
+
+        //    return HttpRequestOptionsKey(;
+        //}
 
         public Asistencia GetAsistenciaById(int id)
         {
             return _context.Asistencia.Find(id);
         }
-        public async Task<Asistencia> CreateAsistenciaAsync(Asistencia Asistencia)
+        public async Task<Asistencia> CreateAsistenciaAsync(Asistencia asistencia)
         {
-            await _context.Set<Asistencia>().AddAsync(Asistencia);
+            asistencia.fecha = DateTime.Now;
+            await _context.Set<Asistencia>().AddAsync(asistencia);
             await _context.SaveChangesAsync();
-            return Asistencia;
+            return asistencia;
         }
 
         public async Task<bool> UpdateAsistenciaAsync(Asistencia Asistencia)

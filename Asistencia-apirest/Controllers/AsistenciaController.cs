@@ -1,7 +1,10 @@
 ﻿
 using Asistencia_apirest.Entidades;
+using DemoAPI.Models;
 using DemoAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -11,23 +14,38 @@ namespace DemoAPI.Controllers
     [ApiController]
     public class AsistenciaController : ControllerBase
     {
+        private SampleContext _context;
         private IAsistenciaRepository _AsistenciaRepository;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
 
         public AsistenciaController(
             IAsistenciaRepository AsistenciaRepository,
-            IWebHostEnvironment webHostEnvironment)
+            IWebHostEnvironment webHostEnvironment,
+            SampleContext context)
         {
             _AsistenciaRepository = AsistenciaRepository;
             _webHostEnvironment = webHostEnvironment;
+            _context = context;
         }
 
         [HttpGet]
         [ActionName(nameof(GetAsistenciasAsync))]
-        public IEnumerable<Asistencia> GetAsistenciasAsync()
+        public IEnumerable GetAsistenciasAsync()
         {
-            return _AsistenciaRepository.GetAsistencias();
+            var query = (from a in _context.Asistencia
+                         join sa in _context.Empleado on a.cod_empleado equals sa.codigo select new { 
+                             a.id,
+                             a.cod_empleado,
+                             a.fecha,
+                             a.imagen,
+                             a.identificador,
+                             a.tipo,
+                             sa.nombre,
+                             sa.local,
+                             sa.num_doc
+                         }).ToList();
+            return query;
         }
 
         [HttpGet("{id}")]
@@ -47,16 +65,6 @@ namespace DemoAPI.Controllers
         public async Task<ActionResult<Asistencia>> CreateAsistenciaAsync(Asistencia Asistencia)
         {
             await _AsistenciaRepository.CreateAsistenciaAsync(Asistencia);
-            string webRootPath = _webHostEnvironment.WebRootPath;
-            var stamp = DateTime.Now.ToString("yyyy-MM-dd-HH-mm");
-            byte[] bytes = Convert.FromBase64String(Asistencia.imagen);
-            Image image;
-            using (MemoryStream ms = new MemoryStream(bytes))
-            {
-                image = Image.FromStream(ms);
-                image.Save(@""+webRootPath+"/img/" +stamp + ".jpg", ImageFormat.Jpeg);
-            }
-            
             return CreatedAtAction(nameof(GetAsistenciaById), new { id = Asistencia.id }, Asistencia);
         }
     
