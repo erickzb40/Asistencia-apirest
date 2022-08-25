@@ -21,10 +21,12 @@ namespace DemoAPI.Controllers
 
         [HttpGet]
         [ActionName(nameof(GetEmpleadosAsync))]
-        public IEnumerable GetEmpleadosAsync()
+        public IEnumerable GetEmpleadosAsync(int empresa)
         {
             var query = (from a in _context.Empleado
                          join sa in _context.Local on a.local equals sa.id
+                         join e in _context.Empresa on sa.empresa equals e.id
+                         where e.id== empresa
                          select new
                          {
                           a.id,

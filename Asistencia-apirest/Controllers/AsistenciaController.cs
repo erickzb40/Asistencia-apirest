@@ -31,10 +31,14 @@ namespace DemoAPI.Controllers
 
         [HttpGet]
         [ActionName(nameof(GetAsistenciasAsync))]
-        public IEnumerable GetAsistenciasAsync()
+        public IEnumerable GetAsistenciasAsync(int empresa)
         {
             var query = (from a in _context.Asistencia
-                         join sa in _context.Empleado on a.cod_empleado equals sa.codigo select new { 
+                         join sa in _context.Empleado on a.cod_empleado equals sa.codigo
+                         join local in _context.Local on sa.local equals local.id
+                         join e in _context.Empresa on local.empresa equals e.id
+                         where e.id == empresa orderby a.id descending
+                         select new {
                              a.id,
                              a.cod_empleado,
                              a.fecha,
@@ -44,7 +48,7 @@ namespace DemoAPI.Controllers
                              sa.nombre,
                              sa.local,
                              sa.num_doc
-                         }).ToList();
+                         }).Take(100).ToList();
             return query;
         }
 

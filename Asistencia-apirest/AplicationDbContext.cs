@@ -13,6 +13,6 @@ namespace DemoAPI.Models
         public DbSet<Empleado> Empleado { get;  set; }
         public DbSet<Usuario> Usuario { get; set; }
         public DbSet<Local> Local { get; set; }
-
+        public DbSet<Empresa> Empresa { get; set; }
     }
 }
