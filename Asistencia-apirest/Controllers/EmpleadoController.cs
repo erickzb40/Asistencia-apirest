@@ -57,15 +57,44 @@ namespace DemoAPI.Controllers
         }
         [HttpGet("codigoUpdate")]
         [ActionName(nameof(GetEmpleadoByCodigo))]
-        public IEnumerable<Empleado> GetEmpleadoByCodigo(int codigo,int id)
+        public IEnumerable GetEmpleadoByCodigo(int codigo,int id, int empresa)
         {
-            return _EmpleadoRepository.GetEmpleadoByCodigo(codigo).Where(r=>r.id!=id);
+            var query = (from e in _context.Empleado
+                         join l in _context.Local on e.local equals l.id
+                         join emp in _context.Empresa on l.empresa equals emp.id
+                         where emp.id == empresa && e.codigo == codigo && e.id != id
+                         select new
+                         {
+                             e.id,
+                             e.nombre,
+                             e.num_doc,
+                             e.tipo_doc,
+                             e.codigo,
+                             e.local,
+                             e.activo
+                         }
+                       ).ToList();
+            return query;
+            //return _EmpleadoRepository.GetEmpleadoByCodigo(codigo).Where(r=>r.id!=id);
         }
         [HttpGet("codigoInsert")]
         [ActionName(nameof(GetEmpleadoByCodigoInsert))]
-        public IEnumerable<Empleado> GetEmpleadoByCodigoInsert(int codigo)
-        {
-            return _EmpleadoRepository.GetEmpleadoByCodigo(codigo);
+        public IEnumerable GetEmpleadoByCodigoInsert(int codigo, int empresa)
+        { var query = (from e in _context.Empleado 
+                       join l in _context.Local on e.local equals l.id
+                       join emp in _context.Empresa on l.empresa equals emp.id 
+                       where emp.id==empresa && e.codigo==codigo
+                       select new {
+                        e.id,
+                        e.nombre,
+                        e.num_doc,
+                        e.tipo_doc,
+                        e.codigo,
+                        e.local,
+                        e.activo
+                       }
+                       ).ToList();
+            return query;
         }
 
         [HttpPost]
