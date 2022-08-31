@@ -71,21 +71,22 @@ namespace DemoAPI.Controllers
             await _AsistenciaRepository.CreateAsistenciaAsync(Asistencia);
             return CreatedAtAction(nameof(GetAsistenciaById), new { id = Asistencia.id }, Asistencia);
         }
-    
 
-        [HttpPut("{id}")]
+        [HttpPost("update")]
         [ActionName(nameof(UpdateAsistencia))]
-        public async Task<ActionResult> UpdateAsistencia(int id, Asistencia Asistencia)
+        public ActionResult<Asistencia> UpdateAsistencia(int id,Asistencia asistencia)
         {
-            if (id != Asistencia.id)
+            var result = _context.Asistencia.First(b => b.id == id);
+            if (result.id!=null)
             {
-                return BadRequest();
+                result.fecha = asistencia.fecha;
+                result.tipo = asistencia.tipo;
+                result.identificador = asistencia.identificador; 
+                _context.SaveChanges();
+                return Ok();
             }
 
-            await _AsistenciaRepository.UpdateAsistenciaAsync(Asistencia);
-
-            return NoContent();
-
+            return BadRequest();
         }
 
         [HttpDelete("{id}")]

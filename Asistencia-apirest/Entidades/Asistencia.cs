@@ -14,6 +14,7 @@ namespace Asistencia_apirest.Entidades
         public int cod_empleado { get; set; }   
         public string? identificador { get; set; }
         public string? imagen { get; set; }
+        public int? empresa { get; set; }
        
     }
 }
