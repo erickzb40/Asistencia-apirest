@@ -79,7 +79,6 @@ namespace DemoAPI.Controllers
             var result = _context.Asistencia.First(b => b.id == id);
             if (result.id!=null)
             {
-                result.fecha = asistencia.fecha;
                 result.tipo = asistencia.tipo;
                 result.identificador = asistencia.identificador; 
                 _context.SaveChanges();

@@ -1,0 +1,19 @@
+{
+  "Version": 1,
+  "Hash": "wSoSkyn5auVhLJ7nXl+udOm0bfAXoFg2fUP0bn31Dws=",
+  "Source": "Asistencia-apirest",
+  "BasePath": "_content/Asistencia-apirest",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "Asistencia-apirest\\wwwroot",
+      "Source": "Asistencia-apirest",
+      "ContentRoot": "C:\\proyectos\\apis\\Asistencia-apirest\\Asistencia-apirest\\wwwroot\\",
+      "BasePath": "_content/Asistencia-apirest",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": []
+}

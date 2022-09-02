@@ -39,6 +39,7 @@ app.UseAuthorization();
 
 app.UseCors(x => x
               .AllowAnyMethod()
+              .AllowAnyOrigin()
               .AllowAnyHeader()
               .SetIsOriginAllowed(origin => true) // allow any origin
               .AllowCredentials()); // allow credentials

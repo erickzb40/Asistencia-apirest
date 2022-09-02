@@ -105,7 +105,7 @@ namespace DemoAPI.Controllers
             return CreatedAtAction(nameof(GetEmpleadoById), new { id = Empleado.id }, Empleado);
         }
 
-        [HttpPut("{id}")]
+        [HttpPost("{id}")]
         [ActionName(nameof(UpdateEmpleado))]
         public async Task<ActionResult> UpdateEmpleado(int id, Empleado Empleado)
         {
