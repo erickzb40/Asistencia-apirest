@@ -7,6 +7,5 @@ namespace Asistencia_apirest.Entidades
         public int id { get; set; }
         public string? descripcion { get; set; }
         public int ruc { get; set; }
-        public int empresa { get; set; }
     }
 }

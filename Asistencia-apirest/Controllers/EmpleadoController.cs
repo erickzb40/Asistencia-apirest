@@ -1,139 +1,161 @@
 ﻿
+
+using Asistencia_apirest.services;
 using DemoAPI.Models;
 using Empleado_apirest.Entidades;
-using Empleado_apirest.Modelos.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections;
+using Microsoft.EntityFrameworkCore;
 
 namespace DemoAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class EmpleadoController : ControllerBase
-    { private SampleContext _context;
-        private IEmpleadoRepository _EmpleadoRepository;
+    {
+        private readonly SampleContext _context;
+        private cifrado _cifrado;
+        private util _util;
 
-        public EmpleadoController(IEmpleadoRepository EmpleadoRepository,SampleContext context)
+        public EmpleadoController(SampleContext context_, cifrado cifrado_, util util_)
         {
-            _EmpleadoRepository = EmpleadoRepository;
-            _context = context;
+            _context = context_;
+            _cifrado = cifrado_;
+            _util = util_;
         }
 
         [HttpGet]
-        [ActionName(nameof(GetEmpleadosAsync))]
-        public IEnumerable GetEmpleadosAsync(int empresa)
+        public async Task<IActionResult> GetEmpleadosAsync(string token)
         {
-            var query = (from a in _context.Empleado
-                         join sa in _context.Local on a.local equals sa.id
-                         join e in _context.Empresa on sa.empresa equals e.id
-                         where e.id== empresa
-                         select new
-                         {
-                          a.id,
-                          a.num_doc,
-                          a.local,
-                          a.codigo,
-                          a.tipo_doc,
-                          a.nombre,
-                          a.activo,
-                          sa.empresa,
-                          sa.descripcion,
-                          sa.ruc
-                         }
-                       ).ToList();
-            return query;
-        }
-
-        [HttpGet("{id}")]
-        [ActionName(nameof(GetEmpleadoById))]
-        public ActionResult<Empleado> GetEmpleadoById(int id)
-        {
-            var EmpleadoByID = _EmpleadoRepository.GetEmpleadoById(id);
-            if (EmpleadoByID == null)
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
             {
-                return NotFound();
+                return NotFound("El token no es valido!");
             }
-            return EmpleadoByID;
-        }
-        [HttpGet("codigoUpdate")]
-        [ActionName(nameof(GetEmpleadoByCodigo))]
-        public IEnumerable GetEmpleadoByCodigo(int codigo,int id, int empresa)
-        {
-            var query = (from e in _context.Empleado
-                         join l in _context.Local on e.local equals l.id
-                         join emp in _context.Empresa on l.empresa equals emp.id
-                         where emp.id == empresa && e.codigo == codigo && e.id != id
-                         select new
-                         {
-                             e.id,
-                             e.nombre,
-                             e.num_doc,
-                             e.tipo_doc,
-                             e.codigo,
-                             e.local,
-                             e.activo
-                         }
-                       ).ToList();
-            return query;
-            //return _EmpleadoRepository.GetEmpleadoByCodigo(codigo).Where(r=>r.id!=id);
-        }
-        [HttpGet("codigoInsert")]
-        [ActionName(nameof(GetEmpleadoByCodigoInsert))]
-        public IEnumerable GetEmpleadoByCodigoInsert(int codigo, int empresa)
-        { var query = (from e in _context.Empleado 
-                       join l in _context.Local on e.local equals l.id
-                       join emp in _context.Empresa on l.empresa equals emp.id 
-                       where emp.id==empresa && e.codigo==codigo
-                       select new {
-                        e.id,
-                        e.nombre,
-                        e.num_doc,
-                        e.tipo_doc,
-                        e.codigo,
-                        e.local,
-                        e.activo
-                       }
-                       ).ToList();
-            return query;
-        }
-
-        [HttpPost]
-        [ActionName(nameof(CreateEmpleadoAsync))]
-        public async Task<ActionResult<Empleado>> CreateEmpleadoAsync(Empleado Empleado)
-        {
-            await _EmpleadoRepository.CreateEmpleadoAsync(Empleado);
-            return CreatedAtAction(nameof(GetEmpleadoById), new { id = Empleado.id }, Empleado);
-        }
-
-        [HttpPost("{id}")]
-        [ActionName(nameof(UpdateEmpleado))]
-        public async Task<ActionResult> UpdateEmpleado(int id, Empleado Empleado)
-        {
-            if (id != Empleado.id)
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
             {
-                return BadRequest();
+                return NotFound("La empresa ingresada no es válida.");
             }
-
-            await _EmpleadoRepository.UpdateEmpleadoAsync(Empleado);
-
-            return NoContent();
-
-        }
-
-        [HttpDelete("{id}")]
-        [ActionName(nameof(DeleteEmpleado))]
-        public async Task<IActionResult> DeleteEmpleado(int id)
-        {
-            var Empleado = _EmpleadoRepository.GetEmpleadoById(id);
-            if (Empleado == null)
+            if (empresa.cadenaconexion == null)
             {
-                return NotFound();
+                return NotFound("La empresa ingresada no es válida.");
             }
-
-            await _EmpleadoRepository.DeleteEmpleadoAsync(Empleado);
-
-            return NoContent();
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
+                if (usuario_locales == null)
+                {
+                    return NotFound("No hay locales asignados");
+                }
+                int[] locales = _util.convertirArray(usuario_locales);
+                var query = await (from a in context.Empleado
+                                   join sa in context.Local on a.local equals sa.id
+                                   where locales.Contains(sa.id)
+                                   select new
+                                   {
+                                       a.id,
+                                       a.num_doc,
+                                       a.local,
+                                       a.codigo,
+                                       a.tipo_doc,
+                                       a.nombre,
+                                       a.activo,
+                                       sa.descripcion,
+                                       sa.ruc
+                                   }
+                   ).ToListAsync();
+                return Ok(query);
+            }
         }
 
+        [HttpPost("update")]
+        public async Task<IActionResult> UpdateEmpleado(string token, Empleado empleado)
+        {
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
+            {
+                return NotFound("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
+                if (usuario_locales == null)
+                {
+                    return NotFound("No hay locales asignados");
+                }
+                var result = await context.Empleado.FirstOrDefaultAsync(b => b.id == empleado.id);
+                var rep =    await context.Empleado.FirstOrDefaultAsync(res => res.codigo.Equals(empleado.codigo)&&res.id!=empleado.id);
+                if (rep != null)
+                {
+                    return Problem("El codigo ingresado no esta disponible");
+                }
+                if (result != null)
+                {
+                    result.local = empleado.local;
+                    result.codigo = empleado.codigo;
+                    result.activo = empleado.activo;
+                    result.nombre = empleado.nombre;
+                    result.num_doc = empleado.num_doc;
+                    result.tipo_doc = empleado.tipo_doc;
+                    context.SaveChanges();
+                    return Ok();
+                }
+                return NotFound("No se encontro el usuario");
+            }
+        }
+
+        [HttpPost("insert")]
+        public async Task<IActionResult> InsertEmpleado(string token, Empleado empleado)
+        {
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
+            {
+                return NotFound("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                var rep = await context.Empleado.FirstOrDefaultAsync(res => res.codigo.Equals(empleado.codigo));
+                if (rep==null)
+                {
+                    await context.Set<Empleado>().AddAsync(empleado);
+                    await context.SaveChangesAsync();
+                    return CreatedAtAction(nameof(GetEmpleadosAsync), new { id = empleado.id }, empleado);
+                }
+                return Problem("El codigo ingresado ya está en uso!");
+            }
+        }
     }
 }

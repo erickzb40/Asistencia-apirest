@@ -1,27 +1,57 @@
-﻿using Asistencia_apirest.Entidades;
+﻿using Asistencia_apirest.services;
 using DemoAPI.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
+
 
 namespace Asistencia_apirest.Controllers
 {
     public class LocalController : Controller
     {
         public readonly SampleContext _context;
-
-        public LocalController(SampleContext context)=> _context = context;
+        private cifrado _cifrado;
+        private util _util;
+        public LocalController(SampleContext context,cifrado cifrado_,util util_)
+        {
+            _context = context;
+            _cifrado = cifrado_;
+            _util = util_;
+        }
         // GET: LocalController
 
         [HttpGet("local")]
-        [ActionName(nameof(GetLocal))]
-        public IEnumerable GetLocal(int empresa)
-        { var query = (from a in _context.Local
-                       where a.empresa == empresa
-                       select new { a.id, a.descripcion, a.ruc }
-                       ).ToList();
-            return query;
+        public async Task<IActionResult> GetLocal(string token)
+        {
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
+            {
+                return NotFound("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion)) {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
+                if (usuario_locales == null)
+                {
+                    return NotFound("No hay locales asignados");
+                }
+                int[] locales = _util.convertirArray(usuario_locales);
+                var query = await (from l in context.Local where locales.Contains(l.id) select l).ToListAsync();
+                return Ok(query);
+            }
+        
 
         }
 

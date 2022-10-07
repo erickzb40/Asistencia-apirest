@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\proyectos\\apis\\Asistencia-apirest\\Asistencia-apirest\\Asistencia-apirest.csproj": {}
+    "C:\\proyectos\\apis\\LONGHORN_MARCACION\\Asistencia-apirest\\Asistencia-apirest.csproj": {}
   },
   "projects": {
-    "C:\\proyectos\\apis\\Asistencia-apirest\\Asistencia-apirest\\Asistencia-apirest.csproj": {
+    "C:\\proyectos\\apis\\LONGHORN_MARCACION\\Asistencia-apirest\\Asistencia-apirest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\proyectos\\apis\\Asistencia-apirest\\Asistencia-apirest\\Asistencia-apirest.csproj",
+        "projectUniqueName": "C:\\proyectos\\apis\\LONGHORN_MARCACION\\Asistencia-apirest\\Asistencia-apirest.csproj",
         "projectName": "Asistencia-apirest",
-        "projectPath": "C:\\proyectos\\apis\\Asistencia-apirest\\Asistencia-apirest\\Asistencia-apirest.csproj",
+        "projectPath": "C:\\proyectos\\apis\\LONGHORN_MARCACION\\Asistencia-apirest\\Asistencia-apirest.csproj",
         "packagesPath": "C:\\Users\\erick\\.nuget\\packages\\",
-        "outputPath": "C:\\proyectos\\apis\\Asistencia-apirest\\Asistencia-apirest\\obj\\",
+        "outputPath": "C:\\proyectos\\apis\\LONGHORN_MARCACION\\Asistencia-apirest\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\erick\\AppData\\Roaming\\NuGet\\NuGet.Config",

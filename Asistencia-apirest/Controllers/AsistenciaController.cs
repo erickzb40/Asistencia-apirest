@@ -1,12 +1,10 @@
 ﻿
 using Asistencia_apirest.Entidades;
+using Asistencia_apirest.services;
 using DemoAPI.Models;
-using DemoAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections;
-using System.Drawing;
-using System.Drawing.Imaging;
 
 namespace DemoAPI.Controllers
 {
@@ -15,92 +13,163 @@ namespace DemoAPI.Controllers
     public class AsistenciaController : ControllerBase
     {
         private SampleContext _context;
-        private IAsistenciaRepository _AsistenciaRepository;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        private cifrado _cifrado;
+        private util _util;
 
-
-        public AsistenciaController(
-            IAsistenciaRepository AsistenciaRepository,
-            IWebHostEnvironment webHostEnvironment,
-            SampleContext context)
+        public AsistenciaController(SampleContext context, cifrado cifrado_, util util_)
         {
-            _AsistenciaRepository = AsistenciaRepository;
-            _webHostEnvironment = webHostEnvironment;
             _context = context;
+            _cifrado = cifrado_;
+            _util = util_;
         }
 
         [HttpGet]
-        [ActionName(nameof(GetAsistenciasAsync))]
-        public IEnumerable GetAsistenciasAsync(int empresa)
-        {
-            var query = (from a in _context.Asistencia
-                         join sa in _context.Empleado on a.cod_empleado equals sa.codigo
-                         join local in _context.Local on sa.local equals local.id
-                         join e in _context.Empresa on local.empresa equals e.id
-                         where e.id == empresa orderby a.id descending
-                         select new {
-                             a.id,
-                             a.cod_empleado,
-                             a.fecha,
-                             a.imagen,
-                             a.identificador,
-                             a.tipo,
-                             sa.nombre,
-                             sa.local,
-                             sa.num_doc
-                         }).Take(100).ToList();
-            return query;
+        public async Task<IActionResult> GetAsistenciasAsync(string token)
+        {   var vtoken = _cifrado.validarToken(token);
+            if (vtoken==null)
+            {
+                return NotFound("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion ==vtoken[0]);
+            if (empresa == null)  {
+                return NotFound("La empresa ingresada no es válida.");
+            }if (empresa.cadenaconexion == null) {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            using (var context=new SampleContext(empresa.cadenaconexion))
+            {   var usuario =await context.Usuario.FirstOrDefaultAsync(res=>res.nombreusuario.Equals(vtoken[1])&&res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
+                if (usuario_locales==null)
+                {
+                    return NotFound("No hay locales asignados");
+                }
+                int[] locales = _util.convertirArray(usuario_locales);
+                DateTime fecha = DateTime.Now;
+                int mes = fecha.Month;
+                var listado =  await (from a in context.Asistencia
+                                      join sa in context.Empleado on a.cod_empleado equals sa.codigo
+                                      join local in context.Local on sa.local equals local.id
+                                      where  a.fecha.Month.Equals(mes) && locales.Contains(local.id)
+                                      select new
+                                      {
+                                          a.id,
+                                          a.cod_empleado,
+                                          a.fecha,
+                                          a.imagen,
+                                          a.identificador,
+                                          a.tipo,
+                                          sa.nombre,
+                                          sa.local,
+                                          sa.num_doc
+                                      }).ToListAsync();
+                return Ok(listado);
+            }
         }
 
         [HttpGet("{id}")]
-        [ActionName(nameof(GetAsistenciaById))]
-        public ActionResult<Asistencia> GetAsistenciaById(int id)
+        public async Task<ActionResult<Asistencia>> GetAsistenciaById(string token,int id)
         {
-            var AsistenciaByID = _AsistenciaRepository.GetAsistenciaById(id);
-            if (AsistenciaByID == null)
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
             {
-                return NotFound();
+                return NotFound("El token no es valido!");
             }
-            return AsistenciaByID;
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                var AsistenciaByID = await context.Asistencia.FirstOrDefaultAsync(res => res.id == id);
+                if (AsistenciaByID == null)
+                {
+                    return NotFound();
+                }
+                return AsistenciaByID;
+            }
+           
         }
 
         [HttpPost]
-        [ActionName(nameof(CreateAsistenciaAsync))]
-        public async Task<ActionResult<Asistencia>> CreateAsistenciaAsync(Asistencia Asistencia)
+        public async Task<ActionResult<Asistencia>> CreateAsistenciaAsync(string token,Asistencia asistencia)
         {
-            await _AsistenciaRepository.CreateAsistenciaAsync(Asistencia);
-            return CreatedAtAction(nameof(GetAsistenciaById), new { id = Asistencia.id }, Asistencia);
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
+            {
+                return NotFound("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                asistencia.fecha = DateTime.Now;
+                await context.Set<Asistencia>().AddAsync(asistencia);
+                await context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetAsistenciaById), new { id = asistencia.id }, asistencia);
+            }
         }
 
         [HttpPost("update")]
-        [ActionName(nameof(UpdateAsistencia))]
-        public ActionResult<Asistencia> UpdateAsistencia(int id,Asistencia asistencia)
+        public async Task<IActionResult> UpdateAsistencia(string token,Asistencia asistencia)
         {
-            var result = _context.Asistencia.First(b => b.id == id);
-            if (result.id!=null)
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
             {
-                result.tipo = asistencia.tipo;
-                result.identificador = asistencia.identificador; 
-                _context.SaveChanges();
-                return Ok();
+                return NotFound("El token no es valido!");
             }
-
-            return BadRequest();
-        }
-
-        [HttpDelete("{id}")]
-        [ActionName(nameof(DeleteAsistencia))]
-        public async Task<IActionResult> DeleteAsistencia(int id)
-        {
-            var Asistencia = _AsistenciaRepository.GetAsistenciaById(id);
-            if (Asistencia == null)
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
             {
-                return NotFound();
+                return NotFound("La empresa ingresada no es válida.");
             }
-
-            await _AsistenciaRepository.DeleteAsistenciaAsync(Asistencia);
-
-            return NoContent();
+            if (empresa.cadenaconexion == null)
+            {
+                return NotFound("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return NotFound("El usuario ingresado no es valido");
+                }
+                var result = await context.Asistencia.FirstAsync(b => b.id == asistencia.id);
+                if (result.id != null)
+                {
+                    result.tipo = asistencia.tipo;
+                    result.identificador = asistencia.identificador;
+                    context.SaveChanges();
+                    return Ok();
+                }
+                return BadRequest();
+            }
+              
         }
     }
 }

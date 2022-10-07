@@ -10,10 +10,8 @@ namespace Empleado_apirest.Entidades
         public string? nombre { get; set; }
         public string? num_doc { get; set; }
         public string? tipo_doc { get; set; }
-   
         public int? codigo { get; set; } 
         public int? local { get; set; }
         public Boolean? activo { get; set; }
-        //public virtual string? descripcion { get; set; } 
     }
 }

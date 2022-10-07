@@ -6,8 +6,14 @@ namespace Asistencia_apirest.Entidades
     {
         [Key]
         public int id { get; set; }
+        [MaxLength(50)]
+        public string? descripcion { get; set; }
         public int ruc { get; set; }
-        public string razonsocial { get; set; }
-        public string correo { get; set; }
+        [MaxLength(100)]
+        public string? direccion {get;set;}
+        public int telefono { get; set; }
+        [MaxLength(100)]
+        public string? cadenaconexion { get; set; }
+        public int grupo { get; set; }
     }
 }

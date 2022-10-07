@@ -1,8 +1,9 @@
 ﻿
 using Asistencia_apirest.Entidades;
-using Asistencia_apirest.Modelos.Interfaces;
-using DemoAPI.Models.Repository;
+using Asistencia_apirest.services;
+using DemoAPI.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DemoAPI.Controllers
 {
@@ -10,62 +11,38 @@ namespace DemoAPI.Controllers
     [ApiController]
     public class UsuarioController : ControllerBase
     {
-        private IUsuarioRepository _UsuarioRepository;
-
-        public UsuarioController(IUsuarioRepository UsuarioRepository)
+        private SampleContext _context;
+        private cifrado _cifrado;
+        public UsuarioController(SampleContext context_,cifrado cifrado_)
         {
-            _UsuarioRepository = UsuarioRepository;
+            _context = context_;
+            _cifrado = cifrado_;
         }
 
         [HttpPost("login")]
-        [ActionName(nameof(GetUsuariosAsync))]
-        public IEnumerable<Usuario> GetUsuariosAsync(Usuario usuario)
+        public async Task<IActionResult> GetUsuariosAsync(Usuario usuario)
         {
-            return _UsuarioRepository.GetUsuarios(usuario).Where(res => res.nombreusuario == usuario.nombreusuario && res.contrasena == usuario.contrasena);
-        }
-
-        [HttpGet("{id}")]
-        [ActionName(nameof(GetUsuarioById))]
-        public ActionResult<Usuario> GetUsuarioById(int id)
-        {
-            var UsuarioByID = _UsuarioRepository.GetUsuarioById(id);
-            if (UsuarioByID == null)
-            {
-                return NotFound();
+            var query = await _context.Empresa.FirstOrDefaultAsync(res=>res.descripcion.Equals(usuario.empresa));
+            if (query == null) {
+                return NotFound("No se encontro la empresa");
             }
-            return UsuarioByID;
-        }
-
-
-        [HttpPut("{id}")]
-        [ActionName(nameof(UpdateUsuario))]
-        public async Task<ActionResult> UpdateUsuario(int id, Usuario Usuario)
-        {
-            if (id != Usuario.usuarioid)
-            {
-                return BadRequest();
+            if (query.cadenaconexion == null) { 
+                return NotFound("No se encontro la empresa"); 
             }
-
-            await _UsuarioRepository.UpdateUsuarioAsync(Usuario);
-
-            return NoContent();
-
-        }
-
-        [HttpDelete("{id}")]
-        [ActionName(nameof(DeleteUsuario))]
-        public async Task<IActionResult> DeleteUsuario(int id)
-        {
-            var Usuario = _UsuarioRepository.GetUsuarioById(id);
-            if (Usuario == null)
-            {
-                return NotFound();
+            using (var context = new SampleContext(query.cadenaconexion)) {
+                var result = await (from a in context.Usuario.Where(
+                    res => res.nombreusuario.Equals(usuario.nombreusuario) && res.contrasena.Equals(usuario.contrasena))
+                                    select a).ToListAsync();
+                if (result==null)
+                {
+                    return NotFound("No se encontro ningun usuario");
+                }
+                var cifrado= _cifrado.EncryptStringAES(usuario.empresa+" "+usuario.nombreusuario+" "+usuario.contrasena);
+                return Ok("{\"token\":\"" + cifrado + "\"}");
             }
-
-            await _UsuarioRepository.DeleteUsuarioAsync(Usuario);
-
-            return NoContent();
         }
+
+       
     
     }
 }

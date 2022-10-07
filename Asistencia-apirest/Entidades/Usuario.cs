@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Asistencia_apirest.Entidades
 {
@@ -10,6 +11,7 @@ namespace Asistencia_apirest.Entidades
         public string? contrasena { get; set; } 
         public string? nombres { get; set; }
         public string? correoelectronico { get; set; }
-        public int? empresa { get ; set; }
+        [NotMapped]
+        public string empresa { get; set; }
     }
 }
