@@ -152,7 +152,7 @@ namespace DemoAPI.Controllers
                 {
                     await context.Set<Empleado>().AddAsync(empleado);
                     await context.SaveChangesAsync();
-                    return CreatedAtAction(nameof(GetEmpleadosAsync), new { id = empleado.id }, empleado);
+                    return Ok();
                 }
                 return Problem("El codigo ingresado ya está en uso!");
             }
