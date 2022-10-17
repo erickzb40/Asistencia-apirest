@@ -25,27 +25,27 @@ namespace Asistencia_apirest.Controllers
             var vtoken = _cifrado.validarToken(token);
             if (vtoken == null)
             {
-                return NotFound("El token no es valido!");
+                return Problem("El token no es valido!");
             }
             var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
             if (empresa == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             if (empresa.cadenaconexion == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             using (var context = new SampleContext(empresa.cadenaconexion)) {
                 var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
                 if (usuario == null)
                 {
-                    return NotFound("El usuario ingresado no es valido");
+                    return Problem("El usuario ingresado no es valido");
                 }
                 var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
                 if (usuario_locales == null)
                 {
-                    return NotFound("No hay locales asignados");
+                    return Problem("No hay locales asignados");
                 }
                 int[] locales = _util.convertirArray(usuario_locales);
                 var query = await (from l in context.Local where locales.Contains(l.id) select l).ToListAsync();

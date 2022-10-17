@@ -22,6 +22,7 @@ namespace DemoAPI.Models
                 optionsBuilder.UseSqlServer(_connectionString);
             }
         }
+  
         public DbSet<Asistencia> Asistencia { get; set; }
         public DbSet<Empleado> Empleado { get; set; }
         public DbSet<Usuario> Usuario { get; set; }

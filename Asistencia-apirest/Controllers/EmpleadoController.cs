@@ -29,28 +29,28 @@ namespace DemoAPI.Controllers
             var vtoken = _cifrado.validarToken(token);
             if (vtoken == null)
             {
-                return NotFound("El token no es valido!");
+                return Problem("El token no es valido!");
             }
             var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
             if (empresa == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             if (empresa.cadenaconexion == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             using (var context = new SampleContext(empresa.cadenaconexion))
             {
                 var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
                 if (usuario == null)
                 {
-                    return NotFound("El usuario ingresado no es valido");
+                    return Problem("El usuario ingresado no es valido");
                 }
                 var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
                 if (usuario_locales == null)
                 {
-                    return NotFound("No hay locales asignados");
+                    return Problem("No hay locales asignados");
                 }
                 int[] locales = _util.convertirArray(usuario_locales);
                 var query = await (from a in context.Empleado
@@ -79,28 +79,28 @@ namespace DemoAPI.Controllers
             var vtoken = _cifrado.validarToken(token);
             if (vtoken == null)
             {
-                return NotFound("El token no es valido!");
+                return Problem("El token no es valido!");
             }
             var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
             if (empresa == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             if (empresa.cadenaconexion == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             using (var context = new SampleContext(empresa.cadenaconexion))
             {
                 var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
                 if (usuario == null)
                 {
-                    return NotFound("El usuario ingresado no es valido");
+                    return Problem("El usuario ingresado no es valido");
                 }
                 var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
                 if (usuario_locales == null)
                 {
-                    return NotFound("No hay locales asignados");
+                    return Problem("No hay locales asignados");
                 }
                 var result = await context.Empleado.FirstOrDefaultAsync(b => b.id == empleado.id);
                 var rep =    await context.Empleado.FirstOrDefaultAsync(res => res.codigo.Equals(empleado.codigo)&&res.id!=empleado.id);
@@ -119,7 +119,7 @@ namespace DemoAPI.Controllers
                     context.SaveChanges();
                     return Ok();
                 }
-                return NotFound("No se encontro el usuario");
+                return Problem("No se encontro el usuario");
             }
         }
 
@@ -129,23 +129,23 @@ namespace DemoAPI.Controllers
             var vtoken = _cifrado.validarToken(token);
             if (vtoken == null)
             {
-                return NotFound("El token no es valido!");
+                return Problem("El token no es valido!");
             }
             var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
             if (empresa == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             if (empresa.cadenaconexion == null)
             {
-                return NotFound("La empresa ingresada no es válida.");
+                return Problem("La empresa ingresada no es válida.");
             }
             using (var context = new SampleContext(empresa.cadenaconexion))
             {
                 var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
                 if (usuario == null)
                 {
-                    return NotFound("El usuario ingresado no es valido");
+                    return Problem("El usuario ingresado no es valido");
                 }
                 var rep = await context.Empleado.FirstOrDefaultAsync(res => res.codigo.Equals(empleado.codigo));
                 if (rep==null)
@@ -155,6 +155,45 @@ namespace DemoAPI.Controllers
                     return Ok();
                 }
                 return Problem("El codigo ingresado ya está en uso!");
+            }
+        }
+
+
+        [HttpGet("info")]
+        public async Task<IActionResult> GetEmpleadoInfoAsync(string token,int codigo)
+        {
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
+            {
+                return Problem("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            if (empresa == null)
+            {
+                return Problem("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return Problem("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return Problem("El usuario ingresado no es valido");
+                }
+                var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
+                if (usuario_locales == null)
+                {
+                    return Problem("No hay locales asignados");
+                }
+                var empleado = await context.Empleado.FirstOrDefaultAsync(res=>res.codigo.Equals(codigo));
+                if (empleado==null)
+                {
+                    return Ok("{}");
+                }
+                return Ok(empleado);
             }
         }
     }
