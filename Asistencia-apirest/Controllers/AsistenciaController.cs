@@ -25,47 +25,145 @@ namespace DemoAPI.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAsistenciasAsync(string token)
-        {   var vtoken = _cifrado.validarToken(token);
-            if (vtoken==null)
+        { var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
             {
                 return Problem("El token no es valido!");
             }
-            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion ==vtoken[0]);
-            if (empresa == null)  {
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]&&x.app.Equals("MARCACION"));
+            if (empresa == null) {
                 return Problem("La empresa ingresada no es válida.");
-            }if (empresa.cadenaconexion == null) {
+            } if (empresa.cadenaconexion == null) {
                 return Problem("La empresa ingresada no es válida.");
             }
-            using (var context=new SampleContext(empresa.cadenaconexion))
-            {   var usuario =await context.Usuario.FirstOrDefaultAsync(res=>res.nombreusuario.Equals(vtoken[1])&&res.contrasena.Equals(vtoken[2]));
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            { var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
                 if (usuario == null)
                 {
                     return Problem("El usuario ingresado no es valido");
                 }
                 var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
-                if (usuario_locales==null)
+                if (usuario_locales == null)
                 {
                     return Problem("No hay locales asignados");
                 }
                 int[] locales = _util.convertirArray(usuario_locales);
                 DateTime fecha = DateTime.Now;
                 int mes = fecha.Month;
-                var listado =  await (from a in context.Asistencia
-                                      join sa in context.Empleado on a.cod_empleado equals sa.codigo
-                                      join local in context.Local on sa.local equals local.id
-                                      where  a.fecha.Month.Equals(mes) && locales.Contains(local.id)
-                                      select new
-                                      {
-                                          a.id,
-                                          a.cod_empleado,
-                                          a.fecha,
-                                          a.imagen,
-                                          a.identificador,
-                                          a.tipo,
-                                          sa.nombre,
-                                          sa.local,
-                                          sa.num_doc
-                                      }).ToListAsync();
+                int year = fecha.Year;
+                var listado = await (from a in context.Asistencia
+                                     join sa in context.Empleado on a.cod_empleado equals sa.codigo
+                                     join local in context.Local on sa.local equals local.id
+                                     where a.fecha.Month.Equals(mes) && locales.Contains(local.id) && a.fecha.Year.Equals(year)
+                                     select new
+                                     {
+                                         a.id,
+                                         a.cod_empleado,
+                                         a.fecha,
+                                         a.imagen,
+                                         a.identificador,
+                                         a.tipo,
+                                         sa.nombre,
+                                         sa.local,
+                                         sa.num_doc
+                                     }).ToListAsync();
+                return Ok(listado);
+            }
+        }
+        [HttpGet("mes")]
+        public async Task<IActionResult> GetAsistenciasPorMesAsync(string token,int mes)
+        {
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
+            {
+                return Problem("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]&&x.app.Equals("MARCACION"));
+            if (empresa == null)
+            {
+                return Problem("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return Problem("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return Problem("El usuario ingresado no es valido");
+                }
+                var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
+                if (usuario_locales == null)
+                {
+                    return Problem("No hay locales asignados");
+                }
+                int[] locales = _util.convertirArray(usuario_locales);
+                DateTime fecha = DateTime.Now;
+                int year = fecha.Year;
+                var listado = await (from a in context.Asistencia
+                                     join sa in context.Empleado on a.cod_empleado equals sa.codigo
+                                     join local in context.Local on sa.local equals local.id
+                                     where a.fecha.Month.Equals(mes) && locales.Contains(local.id) && a.fecha.Year.Equals(year)
+                                     select new
+                                     {
+                                         a.id,
+                                         a.cod_empleado,
+                                         a.fecha,
+                                         a.identificador,
+                                         sa.nombre,
+                                         sa.num_doc
+                                     }).ToListAsync();
+                return Ok(listado);
+            }
+        }
+        [HttpGet("empleado")]
+        public async Task<IActionResult> GetAsistenciasPorEmleadoAsync(string token, string desde,string hasta,int empleado)
+        {
+            var vtoken = _cifrado.validarToken(token);
+            if (vtoken == null)
+            {
+                return Problem("El token no es valido!");
+            }
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0] && x.app.Equals("MARCACION"));
+            if (empresa == null)
+            {
+                return Problem("La empresa ingresada no es válida.");
+            }
+            if (empresa.cadenaconexion == null)
+            {
+                return Problem("La empresa ingresada no es válida.");
+            }
+            using (var context = new SampleContext(empresa.cadenaconexion))
+            {
+                var usuario = await context.Usuario.FirstOrDefaultAsync(res => res.nombreusuario.Equals(vtoken[1]) && res.contrasena.Equals(vtoken[2]));
+                if (usuario == null)
+                {
+                    return Problem("El usuario ingresado no es valido");
+                }
+                var usuario_locales = await context.Usuario_local.Where(res => res.usuarioid.Equals(usuario.usuarioid)).ToListAsync();
+                if (usuario_locales == null)
+                {
+                    return Problem("No hay locales asignados");
+                }
+                int[] locales = _util.convertirArray(usuario_locales);
+                DateTime fecha = DateTime.Now;
+                int year = fecha.Year;
+                var listado = await (from a in context.Asistencia
+                                     join sa in context.Empleado on a.cod_empleado equals sa.codigo
+                                     join local in context.Local on sa.local equals local.id
+                                     where sa.id.Equals(empleado) &&a.fecha>= DateTime.Parse(desde) && a.fecha <=  DateTime.Parse(hasta) && locales.Contains(local.id) && a.fecha.Year.Equals(year)
+                                     select new
+                                     {
+                                         a.id,
+                                         a.cod_empleado,
+                                         a.fecha,
+                                         a.identificador,
+                                         a.imagen,
+                                         sa.nombre,
+                                         sa.num_doc
+                                     }).ToListAsync();
                 return Ok(listado);
             }
         }
@@ -78,7 +176,7 @@ namespace DemoAPI.Controllers
             {
                 return Problem("El token no es valido!");
             }
-            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]&&x.app.Equals("MARCACION"));
             if (empresa == null)
             {
                 return Problem("La empresa ingresada no es válida.");
@@ -112,7 +210,7 @@ namespace DemoAPI.Controllers
             {
                 return Problem("El token no es valido!");
             }
-            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]&&x.app.Equals("MARCACION"));
             if (empresa == null)
             {
                 return Problem("La empresa ingresada no es válida.");
@@ -143,7 +241,7 @@ namespace DemoAPI.Controllers
             {
                 return Problem("El token no es valido!");
             }
-            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]&&x.app.Equals("MARCACION"));
             if (empresa == null)
             {
                 return Problem("La empresa ingresada no es válida.");
@@ -180,7 +278,7 @@ namespace DemoAPI.Controllers
             {
                 return Problem("El token no es valido!");
             }
-            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]&&x.app.Equals("MARCACION"));
             if (empresa == null)
             {
                 return Problem("La empresa ingresada no es válida.");

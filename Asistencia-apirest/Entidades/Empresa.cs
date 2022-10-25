@@ -10,10 +10,11 @@ namespace Asistencia_apirest.Entidades
         public string? descripcion { get; set; }
         public int ruc { get; set; }
         [MaxLength(100)]
-        public string? direccion {get;set;}
+        public string? direccion { get; set; }
         public int telefono { get; set; }
         [MaxLength(100)]
         public string? cadenaconexion { get; set; }
         public int grupo { get; set; }
+        public string? app { get; set; }
     }
 }

@@ -47,7 +47,7 @@ namespace DemoAPI.Controllers
             {
                 return Problem("El token no es valido!");
             }
-            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]);
+            var empresa = await _context.Empresa.FirstOrDefaultAsync(x => x.descripcion == vtoken[0]&&x.app.Equals("MARCACION"));
             if (empresa == null)
             {
                 return Problem("La empresa ingresada no es válida.");

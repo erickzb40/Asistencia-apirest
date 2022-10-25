@@ -9,6 +9,7 @@ namespace Asistencia_apirest.Entidades
     {
         [Key]
         public int? id { get; set; }
+        [Column(TypeName = "smalldatetime")]
         public DateTime fecha { get; set; }
         public string? tipo { get; set; }
         public int cod_empleado { get; set; }
