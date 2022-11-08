@@ -22,7 +22,7 @@ namespace DemoAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> GetUsuariosAsync(Usuario usuario)
         {
-            var query = await _context.Empresa.FirstOrDefaultAsync(res=>res.descripcion.Equals(usuario.empresa));
+            var query = await _context.Empresa.FirstOrDefaultAsync(res=>res.descripcion.Equals(usuario.empresa)&&res.app.Equals("MARCACION"));
             if (query == null) {
                 return Problem("No se encontro la empresa");
             }

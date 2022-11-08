@@ -142,7 +142,7 @@ namespace Asistencia_apirest.services
             // Return the encrypted bytes from the memory stream.
             return encrypted;
         }
-        public string[] validarToken(string token)
+        public string[] validarToken(string token) 
         {
             var vtoken = DecryptStringAES(token);
             if (vtoken == null || vtoken == "")
